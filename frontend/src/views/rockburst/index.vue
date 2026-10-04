@@ -2,11 +2,11 @@
   <section class="page" data-module="rockburst">
     <header class="page-head">
       <div>
-        <h2>冲击地压管理</h2>
-        <p class="page-desc">维护微震监测，围绕监测编号、所在区域、微震能量、微震频次做登记、筛选与状态流转。</p>
+        <h2>微震监测明细</h2>
+        <p class="page-desc">平铺查看全部测点：等级、能量、应力与解危状态与「防冲分级看板」同源，看板日期默认取今天。</p>
       </div>
       <div class="page-actions">
-        <button class="btn primary" type="button" @click="openCreate">登记微震监测</button>
+        <RouterLink class="btn primary" to="/rockburst">返回分级看板</RouterLink>
         <button class="btn" type="button" @click="exportRows">导出冲击地压清单</button>
       </div>
     </header>
@@ -72,8 +72,8 @@ type Row = Record<string, string | number | null>
 const ENDPOINT = '/api/rockburst'
 const columns = ["监测编号", "所在区域", "微震能量", "微震频次", "应力值", "预警等级", "处置措施", "监测状态"]
 const actions = ["应力预警", "解危处置", "解危确认"]
-const statuses = ["正常", "应力集中", "预警", "已解危"]
-const stats = [{"label": "正常区域", "value": 0}, {"label": "应力集中区", "value": 0}, {"label": "预警区域", "value": 0}]
+const statuses = ["正常监测", "应力集中", "预警处置", "已解危"]
+const stats = [{ label: "正常监测", value: 0 }, { label: "应力集中", value: 0 }, { label: "预警处置", value: 0 }, { label: "已解危", value: 0 }]
 
 const rows = ref<Row[]>([])
 const total = ref(0)
@@ -88,10 +88,6 @@ function resetFilters() {
 
 function exportRows() {
   window.open(`${ENDPOINT}/export`, '_blank')
-}
-
-function openCreate() {
-  errorMessage.value = '微震监测登记入口尚未接入审批流'
 }
 
 async function runAction(action: string, row: Row) {

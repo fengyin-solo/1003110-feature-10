@@ -28,6 +28,24 @@ class EntryPayload(BaseModel):
     remark: str | None = None
 
 
+class ReadingPayload(BaseModel):
+    """微震读数补录：测点 + 日期 + 能量/应力（频次可选）。"""
+
+    values: dict[str, Any] = Field(default_factory=dict)
+
+
+class BasisPayload(BaseModel):
+    """判定口径调整：新版本名称、生效日期与双轴阈值。"""
+
+    values: dict[str, Any] = Field(default_factory=dict)
+
+
+class ReliefPayload(BaseModel):
+    """解危措施登记：测点 + 日期 + 措施。"""
+
+    values: dict[str, Any] = Field(default_factory=dict)
+
+
 
 class MineareaEntry(BaseModel):
     """矿区明细结构。"""

@@ -1,15 +1,17 @@
-"""冲击地压业务规则：状态流转、字段校验与筛选口径都收在这里。"""
+"""冲击地压业务规则：平铺表接口适配分级看板领域。
+
+等级判定只存在于 rockburst_domain 一处，本模块只做旧平铺页需要的字段转换，
+保证平铺表、分级看板、测点详情读到的是同一份等级结果。
+"""
 from __future__ import annotations
 
 from typing import Any
 
-from app.store import store
+from app.services.rockburst_domain import NO_DATA, domain
 
 MODULE = "rockburst"
 REQUIRED_FIELDS = ["监测编号", "所在区域", "微震能量"]
-STATUS_ORDER = ["正常", "应力集中", "预警", "已解危"]
-ACTION_RULES = {"应力预警": "应力集中", "解危处置": "预警", "解危确认": "已解危"}
-NEGATIVE_ACTIONS = []
+STATUS_ORDER = ["正常监测", "应力集中", "预警处置", "已解危"]
 
 
 class RockburstService:
@@ -21,7 +23,7 @@ class RockburstService:
         page: int = 1,
         size: int = 20,
     ) -> tuple[list[dict[str, Any]], int]:
-        rows = store.rows(MODULE)
+        rows = domain.flat_rows()
         if keyword:
             rows = [row for row in rows if keyword in str(row.get("监测编号", ""))]
         if status:
@@ -31,31 +33,27 @@ class RockburstService:
         return rows[start:start + size], total
 
     def get_entry(self, entry_id: int) -> dict[str, Any] | None:
-        return store.find(MODULE, entry_id)
+        detail = domain.point_detail(entry_id)
+        if detail is None:
+            return None
+        row = next((row for row in domain.flat_rows() if int(row["id"]) == entry_id), None)
+        return row or {"id": entry_id, "监测编号": detail["point"]["code"], "预警等级": NO_DATA}
 
     def create_entry(self, values: dict[str, Any]) -> tuple[dict[str, Any] | None, list[str]]:
-        missing = [field for field in REQUIRED_FIELDS if not str(values.get(field) or "").strip()]
+        point, missing = domain.create_point(values)
         if missing:
             return None, missing
-        rows = store.rows(MODULE)
-        entry = {"id": max((int(row.get("id", 0)) for row in rows), default=0) + 1}
-        entry.update({field: values.get(field) for field in REQUIRED_FIELDS})
-        entry["status"] = STATUS_ORDER[0]
-        entry["pending"] = True
-        entry["abnormal"] = False
-        rows.append(entry)
-        return entry, []
+        # 登记时带了能量/应力就顺手作为今天读数进入判定；不带则先建测点
+        energy, stress = values.get("微震能量"), values.get("应力值")
+        if energy not in (None, "") or stress not in (None, ""):
+            domain.ingest_reading({
+                "point_id": point["id"],
+                "date": domain.meta["today"],
+                "energy": energy or 0,
+                "stress": stress or 0,
+                "count": values.get("微震频次"),
+            })
+        return point, []
 
     def run_action(self, entry_id: int, action: str) -> tuple[dict[str, Any] | None, str]:
-        entry = store.find(MODULE, entry_id)
-        if entry is None:
-            return None, f"微震监测 {entry_id} 不存在或已归档"
-        if action not in ACTION_RULES:
-            return None, f"动作「{action}」不属于冲击地压可执行范围"
-        target = ACTION_RULES[action]
-        if target not in STATUS_ORDER:
-            return None, f"目标状态「{target}」不在允许的状态序列里"
-        entry["status"] = target
-        entry["pending"] = target != STATUS_ORDER[-1]
-        entry["abnormal"] = action in NEGATIVE_ACTIONS
-        return entry, f"微震监测已{action}"
+        return domain.run_flow_action(entry_id, action)

@@ -6,7 +6,8 @@ const Gas = () => import('@/views/gas/index.vue')
 const Ventilation = () => import('@/views/ventilation/index.vue')
 const Roof = () => import('@/views/roof/index.vue')
 const Waterhazard = () => import('@/views/waterhazard/index.vue')
-const Rockburst = () => import('@/views/rockburst/index.vue')
+const Rockburst = () => import('@/views/rockburst/board.vue')
+const RockburstList = () => import('@/views/rockburst/index.vue')
 const Personnel = () => import('@/views/personnel/index.vue')
 const Dust = () => import('@/views/dust/index.vue')
 const Fireprevent = () => import('@/views/fireprevent/index.vue')
@@ -32,6 +33,7 @@ const router = createRouter({
     { path: '/roof', name: 'roof', component: Roof },
     { path: '/waterhazard', name: 'waterhazard', component: Waterhazard },
     { path: '/rockburst', name: 'rockburst', component: Rockburst },
+    { path: '/rockburst/list', name: 'rockburst-list', component: RockburstList },
     { path: '/personnel', name: 'personnel', component: Personnel },
     { path: '/dust', name: 'dust', component: Dust },
     { path: '/fireprevent', name: 'fireprevent', component: Fireprevent },

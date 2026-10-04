@@ -85,3 +85,7 @@ desktop.ini
 *.db
 *.pid
 *.seed
+
+# 无 venv 模块时本地安装的依赖目录
+.pylibs/
+.venv311/
