@@ -28,6 +28,48 @@ class EntryPayload(BaseModel):
     remark: str | None = None
 
 
+class ReadingBackfillPayload(BaseModel):
+    """补录一条微震读数（能量单位 J、应力单位 MPa），并触发当日起顺序重算。"""
+
+    date: str
+    time: str | None = None
+    energy_j: float | None = None
+    stress_mpa: float | None = None
+    source: str | None = None
+
+
+class ReliefPayload(BaseModel):
+    """登记一次解危措施。"""
+
+    ts: str | None = None
+    measure: str
+    operator: str | None = None
+
+
+class RulePayload(BaseModel):
+    """新增一版判定口径：蓝/黄/橙/红四道门槛，能量与应力各一份。"""
+
+    version: str
+    name: str | None = None
+    effective_date: str
+    energy_thresholds: list[float] = Field(min_length=4, max_length=4)
+    stress_thresholds: list[float] = Field(min_length=4, max_length=4)
+    basis: str | None = None
+
+
+class CloseDayPayload(BaseModel):
+    """收盘：不传日期时收最早一个未收盘日。"""
+
+    date: str | None = None
+
+
+class AlertAckPayload(BaseModel):
+    """值班调度签收等级抬高提醒。"""
+
+    operator: str | None = None
+
+
+
 
 class MineareaEntry(BaseModel):
     """矿区明细结构。"""
